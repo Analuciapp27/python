@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detección de Personas, Gatos y Plantas</title>
+  </head>
+
+  <body>
+    <div class="container mt-5">
+      <h1 style="text-align: center">Detección de Personas, Gatos y Plantas</h1>
+
+      <div style="border: 1px solid #ccc; padding: 20px; margin-top: 20px">
+        <h2>Seleccionar imagen:</h2>
+        <form action="/detect" method="POST" enctype="multipart/form-data">
+          <div style="margin-bottom: 10px">
+            <label for="file-input">Seleccionar imagen:</label>
+            <input type="file" id="file-input" name="file" />
+          </div>
+          <button type="submit" class="btn btn-primary">
+            Detectar objetos
+          </button>
+        </form>
+      </div>
+
+      <!-- Espacio para mostrar la previsualización de la imagen -->
+      <div style="margin-top: 20px">
+        <h2>Previsualización de la imagen:</h2>
+        <div style="border: 1px solid #ccc; text-align: center">
+          <img
+            id="selected-image"
+            src=""
+            alt="Previsualización de la imagen"
+            style="max-width: 100%; max-height: 100%"
+          />
+        </div>
+      </div>
+
+      <div style="margin-top: 20px">
+        <h2>Resultados:</h2>
+        <div style="border: 1px solid #ccc; padding: 10px">
+          <div style="display: flex; justify-content: space-between">
+            <div>
+              <p class="font-weight-bold">
+                Personas detectadas:
+                <span id="personCount" class="font-weight-normal">0</span>
+              </p>
+            </div>
+            <div>
+              <p class="font-weight-bold">
+                Gatos detectados:
+                <span id="catCount" class="font-weight-normal">0</span>
+              </p>
+            </div>
+            <div>
+              <p class="font-weight-bold">
+                Plantas detectadas:
+                <span id="plantCount" class="font-weight-normal">0</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const fileInput = document.getElementById("file-input");
+      const selectedImage = document.getElementById("selected-image");
+
+      fileInput.addEventListener("change", function () {
+        // Limpiar la previsualización de la imagen al seleccionar una nueva
+        selectedImage.src = "";
+        const file = fileInput.files[0];
+        if (file) {
+          const imageURL = URL.createObjectURL(file);
+          selectedImage.src = imageURL;
+        }
+      });
+      document.querySelector("form").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const fileInput = document.getElementById("file-input");
+        const selectedImage = document.getElementById("selected-image");
+
+        if (!fileInput.files.length) {
+          alert("Por favor, seleccione una imagen antes de detectar objetos.");
+          return;
+        }
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        fetch("/detect", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const personCount = document.getElementById("personCount");
+            const catCount = document.getElementById("catCount");
+            const plantCount = document.getElementById("plantCount");
+
+            let personCounter = 0;
+            let catCounter = 0;
+            let plantCounter = 0;
+
+            data.results.forEach((result) => {
+              if (result.label === "person") {
+                personCounter++;
+              } else if (result.label === "cat") {
+                catCounter++;
+              } else if (result.label === "pottedplant") {
+                plantCounter++;
+              }
+            });
+
+            personCount.textContent = personCounter;
+            catCount.textContent = catCounter;
+            plantCount.textContent = plantCounter;
+
+            // Mostrar la imagen previsualizada
+            const imageURL = URL.createObjectURL(fileInput.files[0]);
+            selectedImage.src = imageURL;
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      });
+    </script>
+  </body>
+</html>
